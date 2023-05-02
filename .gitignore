@@ -1,0 +1,13 @@
+# auto build
+build/
+dist/
+JackFramework.egg-info/
+.DS_Store
+.idea/
+
+# python cache
+/*__pycache__*/
+*.pyc
+
+# remote
+sftp-config*.json

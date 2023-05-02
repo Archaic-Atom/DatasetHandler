@@ -1,0 +1,134 @@
+# -*- coding: utf-8 -*-
+import cv2
+import torch
+import tifffile
+import numpy as np
+import JackFramework as jf
+
+try:
+    from .mask_aug import MaskAug
+except ImportError:
+    from mask_aug import MaskAug
+
+
+class DataReader(object):
+    _DEPTH_DIVIDING = 256.0
+
+    def __init__(self, args: object) -> object:
+        self.__args = args
+        self.__img_read_func = self.__read_func(args.dataset)
+        self.mask_aug = MaskAug(args.imgHeight, args.imgWidth,
+                                args.block_size, args.mask_ratio)
+
+    def _get_img_read_func(self):
+        return self.__img_read_func
+
+    def _read_data(self, img_path: str) -> tuple:
+        left_img = np.array(self.__img_read_func(img_path))
+        return left_img
+
+    def _read_training_data(self, img_path: str) -> tuple:
+        args = self.__args
+
+        img = self._read_data(img_path)
+        gt_img = self._read_data(img_path)
+
+        img, gt_img = jf.DataAugmentation.random_scale([img, gt_img])
+        if len(img.shape) == 2:
+            img, gt_img = np.expand_dims(img, axis=2), np.expand_dims(gt_img, axis=2)
+        height, width, _ = img.shape
+        img, gt_img = jf.DataAugmentation.random_crop(
+            [img, gt_img], width, height, args.imgWidth, args.imgHeight)
+        img, gt_img = jf.DataAugmentation.random_horizontal_flip([img, gt_img])
+
+        img, mask = self.mask_aug(img * 255.0)
+        img = jf.DataAugmentation.standardize(img / 255.0)
+        for i in range(img.shape[2]):
+            gt_img[:, :, i] = gt_img[:, :, i] * (1 - mask)
+
+        img, gt_img = img.transpose(2, 0, 1), gt_img.transpose(2, 0, 1)
+        img, gt_img = img.copy(), gt_img.copy()
+        return img, gt_img
+
+    def _img_padding(self, img: np.array) -> tuple:
+        # pading size
+        args = self.__args
+
+        if img.shape[0] < args.imgHeight:
+            padding_height, padding_width = args.imgHeight, args.imgWidth
+        else:
+            padding_height, padding_width = \
+                self._padding_size(img.shape[0]), self._padding_size(img.shape[1])
+
+        top_pad, left_pad = padding_height - img.shape[0], padding_width - img.shape[1]
+
+        # pading
+        if top_pad > 0 or left_pad > 0:
+            img = np.lib.pad(img, ((top_pad, 0), (0, left_pad), (0, 0)),
+                             mode='constant', constant_values=0)
+
+        img = img.transpose(2, 0, 1)
+        return img, top_pad, left_pad
+
+    def _read_testing_data(self, img_path: str) -> object:
+        args = self.__args
+        img = np.array(self.__img_read_func(img_path))
+        if len(img.shape) == 2:
+            img = np.expand_dims(img, axis=2)
+        img, mask = self.mask_aug(img * 255.0)
+        img = jf.DataAugmentation.standardize(img / 255.0)
+        img, top_pad, left_pad = self._img_padding(img)
+        name = self._get_name(args.dataset, img_path)
+        return img, top_pad, left_pad, name, mask
+
+    def __read_func(self, dataset_name: str) -> object:
+        img_read_func = None
+        for case in jf.Switch(dataset_name):
+            if case('US3D'):
+                img_read_func = tifffile.imread
+                break
+            if case('whu'):
+                img_read_func = self._read_gray_tiff
+                break
+            if case():
+                jf.log.error("The dataset's name is error!!!")
+
+        return img_read_func
+
+    def get_data(self, img_path: str, is_training: bool) -> tuple:
+        if is_training:
+            return self._read_training_data(img_path)
+        return self._read_testing_data(img_path)
+
+    @staticmethod
+    def expand_batch_size_dims(img: np.array,
+                               top_pad: int,
+                               left_pad: int,
+                               name: str,
+                               mask: np.array) -> tuple:
+        img = torch.from_numpy(np.expand_dims(img, axis=0))
+        top_pad, left_pad, name = [top_pad], [left_pad], [name]
+        mask = torch.from_numpy(np.expand_dims(img, axis=0))
+        return img, top_pad, left_pad, name, mask
+
+    @staticmethod
+    def _read_gray_tiff(path: str) -> np.array:
+        img = np.array(tifffile.imread(path))
+        img = (img - img.min()) / (img.max() - img.min())
+        return img
+
+    @staticmethod
+    def _padding_size(value: int, base: int = 64) -> int:
+        off_set = 1
+        return value // base + off_set
+
+    @staticmethod
+    def _get_name(dataset_name: str, path: str) -> str:
+        name = ""
+        if dataset_name in {"eth3d", "middlebury"}:
+            off_set = 1
+            pos = path.rfind('/')
+            name = path[:pos]
+            pos = name.rfind('/')
+            name = name[pos + off_set:]
+        return name
