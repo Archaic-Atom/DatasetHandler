@@ -41,14 +41,16 @@ class DataReader(object):
             [img, gt_img], width, height, args.imgWidth, args.imgHeight)
         img, gt_img = jf.DataAugmentation.random_horizontal_flip([img, gt_img])
 
-        img, mask = self.mask_aug(img * 255.0)
-        img = jf.DataAugmentation.standardize(img / 255.0)
+        img, mask, mask_img_patch, random_sample_list = self.mask_aug(img)
+        mask_img_patch = jf.DataAugmentation.standardize(mask_img_patch)
         for i in range(img.shape[2]):
             gt_img[:, :, i] = gt_img[:, :, i] * (1 - mask)
 
         img, gt_img = img.transpose(2, 0, 1), gt_img.transpose(2, 0, 1)
-        img, gt_img = img.copy(), gt_img.copy()
-        return img, gt_img
+        mask_img_patch = mask_img_patch.transpose(3, 2, 0, 1)
+        random_sample_list = np.array(random_sample_list)
+        img, mask_img_patch, gt_img = img.copy(), mask_img_patch.copy(), gt_img.copy()
+        return img, mask_img_patch, random_sample_list, gt_img
 
     def _img_padding(self, img: np.array) -> tuple:
         # pading size
@@ -67,19 +69,22 @@ class DataReader(object):
             img = np.lib.pad(img, ((top_pad, 0), (0, left_pad), (0, 0)),
                              mode='constant', constant_values=0)
 
-        img = img.transpose(2, 0, 1)
         return img, top_pad, left_pad
 
-    def _read_testing_data(self, img_path: str) -> object:
+    def _read_testing_data(self, img_path: str) -> tuple:
         args = self.__args
         img = np.array(self.__img_read_func(img_path))
         if len(img.shape) == 2:
             img = np.expand_dims(img, axis=2)
-        img, mask = self.mask_aug(img * 255.0)
-        img = jf.DataAugmentation.standardize(img / 255.0)
         img, top_pad, left_pad = self._img_padding(img)
+        img, mask, mask_img_patch, random_sample_list = self.mask_aug(img)
+        # new_img = self.mask_aug.reconstruct_img(img, mask_img_patch, random_sample_list)
+        mask_img_patch = jf.DataAugmentation.standardize(mask_img_patch)
         name = self._get_name(args.dataset, img_path)
-        return img, top_pad, left_pad, name, mask
+
+        img, mask_img_patch = img.transpose(2, 0, 1), mask_img_patch.transpose(3, 2, 0, 1)
+        random_sample_list = np.array(random_sample_list)
+        return img, mask_img_patch, random_sample_list, top_pad, left_pad, name, mask
 
     def __read_func(self, dataset_name: str) -> object:
         img_read_func = None
@@ -102,14 +107,18 @@ class DataReader(object):
 
     @staticmethod
     def expand_batch_size_dims(img: np.array,
+                               mask_img_patch: np.array,
+                               random_sample_list: list,
                                top_pad: int,
                                left_pad: int,
                                name: str,
                                mask: np.array) -> tuple:
         img = torch.from_numpy(np.expand_dims(img, axis=0))
+        mask_img_patch = torch.from_numpy(np.expand_dims(mask_img_patch, axis=0))
         top_pad, left_pad, name = [top_pad], [left_pad], [name]
         mask = torch.from_numpy(np.expand_dims(img, axis=0))
-        return img, top_pad, left_pad, name, mask
+        random_sample_list = torch.from_numpy(np.expand_dims(random_sample_list, axis=0))
+        return img, mask_img_patch, random_sample_list, top_pad, left_pad, name, mask
 
     @staticmethod
     def _read_gray_tiff(path: str) -> np.array:
