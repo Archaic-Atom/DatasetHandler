@@ -16,11 +16,11 @@ class MaskAug(object):
         self._block_height_num = int(img_height / block_size)
         self._block_num = int(img_height * img_width / block_size / block_size)
         self._block_num_list = list(range(0, self._block_num))
-        self._sample_num = int(self._block_num * ratio)
+        self._sample_num = int(self._block_num * (1 - ratio))
 
     def _generate_mask(self, img: np.array = None) -> np.array:
         random_sample_list = random.sample(self._block_num_list, self._sample_num)
-        mask = np.ones([self._img_height, self._img_width], dtype = float)
+        mask = np.zeros([self._img_height, self._img_width], dtype = float)
         mask_img_patch = []
         for sample_id in random_sample_list:
             height_id = sample_id // self._block_height_num
@@ -28,7 +28,7 @@ class MaskAug(object):
             cy = height_id * self._block_size
             cx = width_id * self._block_size
             mask_img_patch.append(img[cy:cy + self._block_size, cx:cx + self._block_size, :].copy())
-            mask[cy:cy + self._block_size, cx:cx + self._block_size] = 0
+            mask[cy:cy + self._block_size, cx:cx + self._block_size] = 1
         return mask, np.array(mask_img_patch).transpose(1, 2, 3, 0), random_sample_list
 
     def __call__(self, img: np.array) -> np.array:

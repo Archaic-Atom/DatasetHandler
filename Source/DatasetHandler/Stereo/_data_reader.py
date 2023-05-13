@@ -53,11 +53,12 @@ class DataReader(object):
 
         top_pad, left_pad = padding_height - left_img.shape[0], padding_width - right_img.shape[1]
 
-        # pading
-        left_img = np.lib.pad(left_img, ((top_pad, 0), (0, left_pad), (0, 0)),
-                              mode='constant', constant_values=0)
-        right_img = np.lib.pad(right_img, ((top_pad, 0), (0, left_pad), (0, 0)),
-                               mode='constant', constant_values=0)
+        if top_pad > 0 or left_pad > 0:
+            # pading
+            left_img = np.lib.pad(left_img, ((top_pad, 0), (0, left_pad), (0, 0)),
+                                  mode='constant', constant_values=0)
+            right_img = np.lib.pad(right_img, ((top_pad, 0), (0, left_pad), (0, 0)),
+                                   mode='constant', constant_values=0)
 
         left_img, right_img = left_img.transpose(2, 0, 1), right_img.transpose(2, 0, 1)
         return left_img, right_img, top_pad, left_pad
@@ -78,8 +79,9 @@ class DataReader(object):
         if gt_dsp_path != 'None':
             gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
             gt_dsp = np.squeeze(gt_dsp, axis=2)
-            gt_dsp = np.lib.pad(gt_dsp, ((top_pad, 0), (0, left_pad)),
-                                mode='constant', constant_values=0)
+            if top_pad > 0 or left_pad > 0:
+                gt_dsp = np.lib.pad(gt_dsp, ((top_pad, 0), (0, left_pad)),
+                                    mode='constant', constant_values=0)
         else:
             gt_dsp = np.zeros([left_img.shape[0], left_img.shape[1]])
 

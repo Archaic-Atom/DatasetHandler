@@ -42,6 +42,7 @@ class DataReader(object):
         img, gt_img = jf.DataAugmentation.random_horizontal_flip([img, gt_img])
 
         img, mask, mask_img_patch, random_sample_list = self.mask_aug(img)
+        # new_img = self.mask_aug.reconstruct_img(img, mask_img_patch, random_sample_list)
         mask_img_patch = jf.DataAugmentation.standardize(mask_img_patch)
         for i in range(img.shape[2]):
             gt_img[:, :, i] = gt_img[:, :, i] * (1 - mask)
@@ -50,6 +51,7 @@ class DataReader(object):
         mask_img_patch = mask_img_patch.transpose(3, 2, 0, 1)
         random_sample_list = np.array(random_sample_list)
         img, mask_img_patch, gt_img = img.copy(), mask_img_patch.copy(), gt_img.copy()
+
         return img, mask_img_patch, random_sample_list, gt_img
 
     def _img_padding(self, img: np.array) -> tuple:
@@ -76,6 +78,7 @@ class DataReader(object):
         img = np.array(self.__img_read_func(img_path))
         if len(img.shape) == 2:
             img = np.expand_dims(img, axis=2)
+
         img, top_pad, left_pad = self._img_padding(img)
         img, mask, mask_img_patch, random_sample_list = self.mask_aug(img)
         # new_img = self.mask_aug.reconstruct_img(img, mask_img_patch, random_sample_list)
