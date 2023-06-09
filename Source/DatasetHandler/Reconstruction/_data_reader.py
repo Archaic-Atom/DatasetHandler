@@ -16,7 +16,7 @@ class DataReader(object):
 
     def __init__(self, args: object) -> object:
         self.__args = args
-        self.__img_read_func = self.__read_func(args.dataset)
+        self.__img_read_func, self.__label_read_func = self.__read_func(args.dataset)
         self.mask_aug = MaskAug(args.imgHeight, args.imgWidth,
                                 args.block_size, args.mask_ratio)
 
@@ -24,14 +24,16 @@ class DataReader(object):
         return self.__img_read_func
 
     def _read_data(self, img_path: str) -> tuple:
-        left_img = np.array(self.__img_read_func(img_path))
-        return left_img
+        return np.array(self.__img_read_func(img_path))
+
+    def _read_label(self, img_path: str) -> tuple:
+        return np.array(self.__label_read_func(img_path))
 
     def _read_training_data(self, img_path: str) -> tuple:
         args = self.__args
 
         img = self._read_data(img_path)
-        gt_img = self._read_data(img_path)
+        gt_img = self._read_label(img_path)
 
         img, gt_img = jf.DataAugmentation.random_scale([img, gt_img])
         if len(img.shape) == 2:
@@ -90,18 +92,18 @@ class DataReader(object):
         return img, mask_img_patch, random_sample_list, top_pad, left_pad, name, mask
 
     def __read_func(self, dataset_name: str) -> object:
-        img_read_func = None
+        img_read_func, label_read_func = None, None
         for case in jf.Switch(dataset_name):
             if case('US3D'):
-                img_read_func = tifffile.imread
+                img_read_func, label_read_func = tifffile.imread, self._read_normal_tiff
                 break
             if case('whu'):
-                img_read_func = self._read_gray_tiff
+                img_read_func, label_read_func = self._read_gray_tiff, self._read_gray_tiff
                 break
             if case():
                 jf.log.error("The dataset's name is error!!!")
 
-        return img_read_func
+        return img_read_func, label_read_func
 
     def get_data(self, img_path: str, is_training: bool) -> tuple:
         if is_training:
@@ -127,6 +129,12 @@ class DataReader(object):
     def _read_gray_tiff(path: str) -> np.array:
         img = np.array(tifffile.imread(path))
         img = (img - img.min()) / (img.max() - img.min())
+        return img
+
+    @staticmethod
+    def _read_normal_tiff(path: str) -> np.array:
+        img = np.array(tifffile.imread(path))
+        img = img / 255.0
         return img
 
     @staticmethod
