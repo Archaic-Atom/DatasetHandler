@@ -28,6 +28,7 @@ class DataReader(object):
         args = self.__args
 
         left_img, right_img, gt_dsp = self._read_data(left_img_path, right_img_path, gt_dsp_path)
+        gt_dsp = gt_dsp if gt_dsp.ndim == 3 else np.expand_dims(gt_dsp, axis=2)
         height, width, _ = left_img.shape
         left_img, right_img, gt_dsp = jf.DataAugmentation.random_crop(
             [left_img, right_img, gt_dsp], width, height, args.imgWidth, args.imgHeight)
@@ -78,7 +79,7 @@ class DataReader(object):
 
         if gt_dsp_path != 'None':
             gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
-            gt_dsp = np.squeeze(gt_dsp, axis=2)
+            gt_dsp = gt_dsp if gt_dsp.ndim == 2 else np.squeeze(gt_dsp, axis=2)
             if top_pad > 0 or left_pad > 0:
                 gt_dsp = np.lib.pad(gt_dsp, ((top_pad, 0), (0, left_pad)),
                                     mode='constant', constant_values=0)
