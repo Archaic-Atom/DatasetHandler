@@ -17,8 +17,8 @@ class DataSaver(object):
                          img_id: int, dataset_name: str, names: list, ttimes: float) -> None:
         for case in jf.Switch(dataset_name):
             if case('US3D'):
-                name = batch_size * img_id + idx
-                self.save_kitti_test_data(tmp_res, name)
+                name = names[idx]
+                self.save_us3d_test_data(tmp_res, name)
                 break
             if case('kitti2012') or case('kitti2015') or case('sceneflow'):
                 name = batch_size * img_id + idx
@@ -48,6 +48,18 @@ class DataSaver(object):
         path = self._generate_output_img_path(args.resultImgDir, num)
         img = self._depth2img(img)
         self._save_png_img(path, img)
+
+    def save_us3d_test_data(self, img: np.array, name: str) -> None:
+        args = self.__args
+        dsp_name = args.resultImgDir + name + 'LEFT_DSP.tif'
+        viz_name = args.resultImgDir + name + 'STEREO_GRAY.tif'
+        tifffile.imsave(dsp_name, img, compress=6)
+
+        # save grayscale version of image for visual inspection
+        img = img - img.min()
+        img = ((img / img.max()) * 255.0).astype(np.uint8)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        tifffile.imsave(viz_name, img, compress=6)
 
     def save_eth3d_test_data(self, img: np.array,
                              name: str, ttimes: str) -> None:
