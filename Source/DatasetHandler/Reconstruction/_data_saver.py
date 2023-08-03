@@ -77,18 +77,18 @@ class DataSaver(object):
     def save_whu_test_data(self, img: np.array, num: int) -> None:
         args = self.__args
         path = self._generate_output_img_path(args.resultImgDir, num, img_type='.png')
-        print(img.shape)
+        # print(img.shape)
         cv2.imwrite(path, img * 255)
         #tifffile.imsave(path, img * 255, compress=6)
 
     @staticmethod
     def _crop_test_img(img: np.array, top_pad: int, left_pad: int) -> np.array:
         if top_pad > 0 and left_pad > 0:
-            img = img[top_pad:, : -left_pad]
+            img = img[:, top_pad:, : -left_pad]
         elif top_pad > 0:
-            img = img[top_pad:, :]
+            img = img[:, top_pad:, :]
         elif left_pad > 0:
-            img = img[:, :-left_pad]
+            img = img[:, :, :-left_pad]
         return img
 
     @staticmethod
