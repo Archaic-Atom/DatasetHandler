@@ -177,4 +177,8 @@ class DataReader(object):
             name = path[:pos]
             pos = name.rfind('/')
             name = name[pos + off_set:]
+        elif dataset_name in {"US3D"}:
+            name = os.path.basename(path)
+            pos = name.find('LEFT_RGB')
+            name = name[:pos]
         return name
