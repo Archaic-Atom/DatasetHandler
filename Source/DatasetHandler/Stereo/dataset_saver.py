@@ -18,7 +18,7 @@ class StereoSaver(DataSaver):
     def save_output(self, disp: np.array, img_id: int, dataset_name: str,
                     supplement: list, ttimes: float) -> None:
         bs, _, _ = disp.shape
-        top_pads, left_pads, names = supplement[0], supplement[1], supplement[2]
+        _, top_pads, left_pads, names = supplement
 
         for i in range(bs):
             per_disp, top_pad, left_pad = disp[i, :, :], top_pads[i], left_pads[i]
