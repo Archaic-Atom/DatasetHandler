@@ -36,5 +36,13 @@ class StereoDataset(Dataset):
         return self.__data_handler.get_data(
             left_img_path, right_img_path, gt_dsp_path, self.__is_training)
 
+    def get_data(self, left_img_path, right_img_path, gt_dsp_path, is_training) -> tuple:
+        return self.__data_handler.get_data(
+            left_img_path, right_img_path, gt_dsp_path, is_training)
+
+    def expand_batch_size_dims(self, left_img, right_img, gt_dsp, top_pad, left_pad, name) -> tuple:
+        return self.__data_handler.expand_batch_size_dims(
+            left_img, right_img, gt_dsp, top_pad, left_pad, name)
+
     def __len__(self) -> int:
         return len(self.__data_steam)

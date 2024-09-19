@@ -61,7 +61,7 @@ class DataReader(object):
         # pading size
         args = self.__args
 
-        if img.shape[0] < args.imgHeight:
+        if img.shape[0] < args.imgHeight and img.shape[1] < args.imgWidth:
             padding_height, padding_width = args.imgHeight, args.imgWidth
         else:
             padding_height, padding_width = \
@@ -69,6 +69,7 @@ class DataReader(object):
 
         top_pad, left_pad = padding_height - img.shape[0], padding_width - img.shape[1]
 
+        assert(top_pad >= 0 and left_pad >= 0)
         # pading
         if top_pad > 0 or left_pad > 0:
             img = np.lib.pad(img, ((top_pad, 0), (0, left_pad), (0, 0)),

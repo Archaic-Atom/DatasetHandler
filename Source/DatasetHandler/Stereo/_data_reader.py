@@ -3,8 +3,8 @@ import os
 import torch
 import tifffile
 import numpy as np
-import JackFramework as jf
 import cv2
+import JackFramework as jf
 
 
 class DataReader(object):
@@ -24,7 +24,8 @@ class DataReader(object):
         gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
         return left_img, right_img, gt_dsp
 
-    def _read_training_data(self, left_img_path: str, right_img_path: str, gt_dsp_path: str) -> tuple:
+    def _read_training_data(self, left_img_path: str, right_img_path: str,
+                            gt_dsp_path: str) -> tuple:
         args = self.__args
 
         left_img, right_img, gt_dsp = self._read_data(left_img_path, right_img_path, gt_dsp_path)
