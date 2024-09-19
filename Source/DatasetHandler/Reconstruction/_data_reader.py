@@ -42,7 +42,7 @@ class DataReader(object):
         img, gt_img = jf.DataAugmentation.random_crop(
             [img, gt_img], width, height, args.imgWidth, args.imgHeight)
         img, gt_img = jf.DataAugmentation.random_horizontal_flip([img, gt_img])
-
+        org_img = img.copy()
         img, mask, mask_img_patch, random_sample_list = self.mask_aug(img)
         # new_img = self.mask_aug.reconstruct_img(img, mask_img_patch, random_sample_list)
         # mask_img_patch = jf.DataAugmentation.standardize(mask_img_patch)
@@ -53,15 +53,15 @@ class DataReader(object):
         mask_img_patch = mask_img_patch.transpose(3, 2, 0, 1)
         random_sample_list = np.array(random_sample_list)
         img, mask_img_patch, gt_img = img.copy(), mask_img_patch.copy(), gt_img.copy()
-
-        return img.astype(np.float32), mask_img_patch.astype(np.float32),\
+        org_img = org_img.transpose(2, 0, 1)
+        return org_img.astype(np.float32), mask_img_patch.astype(np.float32),\
             random_sample_list, gt_img
 
     def _img_padding(self, img: np.array) -> tuple:
         # pading size
         args = self.__args
 
-        if img.shape[0] < args.imgHeight:
+        if img.shape[0] < args.imgHeight and img.shape[1] < args.imgWidth:
             padding_height, padding_width = args.imgHeight, args.imgWidth
         else:
             padding_height, padding_width = \
@@ -69,6 +69,7 @@ class DataReader(object):
 
         top_pad, left_pad = padding_height - img.shape[0], padding_width - img.shape[1]
 
+        assert(top_pad >= 0 and left_pad >= 0)
         # pading
         if top_pad > 0 or left_pad > 0:
             img = np.lib.pad(img, ((top_pad, 0), (0, left_pad), (0, 0)),

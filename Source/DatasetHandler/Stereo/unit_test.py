@@ -30,7 +30,7 @@ class StereoDatasetUnitTest(object):
     def gen_input_data(args: object) -> tuple:
         dataset = StereoDataset(args, args.datasetPath, True)
         training_dataloader = torch.utils.data.DataLoader(
-            dataset, batch_size=1, shuffle=False, num_workers=2,
+            dataset, batch_size=2, shuffle=False, num_workers=2,
             pin_memory=True, sampler=None)
         return training_dataloader
 

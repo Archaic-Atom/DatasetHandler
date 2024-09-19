@@ -3,8 +3,8 @@ import os
 import torch
 import tifffile
 import numpy as np
-import JackFramework as jf
 import cv2
+import JackFramework as jf
 
 
 class DataReader(object):
@@ -24,14 +24,18 @@ class DataReader(object):
         gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
         return left_img, right_img, gt_dsp
 
-    def _read_training_data(self, left_img_path: str, right_img_path: str, gt_dsp_path: str) -> tuple:
+    def _read_training_data(self, left_img_path: str, right_img_path: str,
+                            gt_dsp_path: str) -> tuple:
         args = self.__args
 
         left_img, right_img, gt_dsp = self._read_data(left_img_path, right_img_path, gt_dsp_path)
+        left_img, right_img = left_img[:, :, :3], right_img[:, :, :3]
+
         gt_dsp = gt_dsp if gt_dsp.ndim == 3 else np.expand_dims(gt_dsp, axis=2)
         height, width, _ = left_img.shape
         left_img, right_img, gt_dsp = jf.DataAugmentation.random_crop(
             [left_img, right_img, gt_dsp], width, height, args.imgWidth, args.imgHeight)
+
         gt_dsp = np.squeeze(gt_dsp, axis=2)
 
         left_img = jf.DataAugmentation.standardize(left_img)
@@ -71,6 +75,7 @@ class DataReader(object):
 
         left_img = np.array(self.__img_read_func(left_img_path))
         right_img = np.array(self.__img_read_func(right_img_path))
+        left_img, right_img = left_img[:, :, :3], right_img[:, :, :3]
 
         left_img = jf.DataAugmentation.standardize(left_img)
         right_img = jf.DataAugmentation.standardize(right_img)
