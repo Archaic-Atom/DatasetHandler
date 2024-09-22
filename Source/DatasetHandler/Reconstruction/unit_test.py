@@ -80,17 +80,13 @@ class ReconstructionDatasetUnitTest(object):
             print(new_img.shape)
             cv2.imwrite(args.resultImgDir + '0.png', new_img.cpu().detach().numpy()[0, 0, :, :] * 255)
             return
-            # b, l = batch_data[2].shape
-            # for i in range(b):
-            #    for j in range(l):
-            #        print(batch_data[2][i, j])
 
             saver.save_output(new_img.cpu().detach().numpy(), 0, 'whu',
                               [batch_data[3], batch_data[4],
                               batch_data[5], batch_data[6]], 0)
 
 
-def main():
+def main() -> None:
     unit_test = ReconstructionDatasetUnitTest()
     args = unit_test.create_args()
     unit_test.exec(args)

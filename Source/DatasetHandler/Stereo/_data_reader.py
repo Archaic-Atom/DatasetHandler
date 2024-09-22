@@ -95,32 +95,22 @@ class DataReader(object):
 
         return left_img, right_img, gt_dsp, top_pad, left_pad, name
 
-    def __read_func(self, dataset_name: str) -> object:
-        img_read_func = None
-        label_read_func = None
-        for case in jf.Switch(dataset_name):
-            if case('US3D'):
-                img_read_func, label_read_func = tifffile.imread, tifffile.imread
-                break
-            if case('kitti2012') or case('kitti2015'):
-                img_read_func, label_read_func = jf.ImgIO.read_img, self._read_png_disp
-                break
-            if case('eth3d') or case('middlebury') or case('sceneflow'):
-                img_read_func, label_read_func = jf.ImgIO.read_img, self._read_pfm_disp
-                break
-            if case('crestereo'):
-                img_read_func, label_read_func = jf.ImgIO.read_img, self._read_cre_disp
-                break
-            if case('rob'):
-                img_read_func, label_read_func = jf.ImgIO.read_img, self._read_rob_disp
-                break
-            if case('whu'):
-                img_read_func, label_read_func = self._read_gray_tiff, self._read_gray_tiff
-                break
-            if case():
-                jf.log.error("The dataset's name is error!!!")
+    def _get_img_read_func_dict(self) -> dict:
+        return {'US3D': (tifffile.imread, tifffile.imread),
+                'kitti2012': (jf.ImgIO.read_img, self._read_png_disp),
+                'kitti2015': (jf.ImgIO.read_img, self._read_png_disp),
+                'eth3d': (jf.ImgIO.read_img, self._read_pfm_disp),
+                'middlebury': (jf.ImgIO.read_img, self._read_pfm_disp),
+                'sceneflow': (jf.ImgIO.read_img, self._read_pfm_disp),
+                'crestereo': (jf.ImgIO.read_img, self._read_cre_disp),
+                'rob': (jf.ImgIO.read_img, self._read_rob_disp),
+                'whu': (self._read_gray_tiff, self._read_gray_tiff),
+                }
 
-        return img_read_func, label_read_func
+    def __read_func(self, dataset_name: str) -> object:
+        func_dict = self._get_img_read_func_dict()
+        assert dataset_name in func_dict
+        return func_dict[dataset_name]
 
     def get_data(self, left_img_path: str, right_img_path: str,
                  gt_dsp_path: str, is_training: bool) -> tuple:
@@ -155,9 +145,7 @@ class DataReader(object):
 
     @staticmethod
     def _read_gray_tiff(path: str) -> np.array:
-        img = np.array(tifffile.imread(path))
-        img = np.expand_dims(img, axis=2)
-        return img
+        return np.array(tifffile.imread(path)).expand_dims(img, axis=2)
 
     @staticmethod
     def _read_rob_disp(path: str) -> np.array:

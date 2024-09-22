@@ -77,7 +77,6 @@ class DataSaver(object):
     def save_whu_test_data(self, img: np.array, num: int) -> None:
         args = self.__args
         path = self._generate_output_img_path(args.resultImgDir, num, img_type='.png')
-        # print(img.shape)
         cv2.imwrite(path, img * 255)
         #tifffile.imsave(path, img * 255, compress=6)
 
@@ -92,15 +91,14 @@ class DataSaver(object):
         return img
 
     @staticmethod
-    def _generate_output_img_path(dir_path: str, num: str, filename_format: str = "%06d_10",
+    def _generate_output_img_path(dir_path: str, num: str,
+                                  filename_format: str = "%06d_10",
                                   img_type: str = ".png"):
         return dir_path + filename_format % num + img_type
 
     @staticmethod
     def _depth2img(img: np.array) -> np.array:
-        img = np.array(img)
-        img = (img * float(DataSaver._DEPTH_DIVIDING)).astype(np.uint16)
-        return img
+        return (np.array(img) * float(DataSaver._DEPTH_DIVIDING)).astype(np.uint16)
 
     @staticmethod
     def _save_png_img(path: str, img: np.array) -> None:
