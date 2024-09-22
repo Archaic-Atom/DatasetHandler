@@ -108,9 +108,7 @@ class DataSaver(object):
 
     @ staticmethod
     def _depth2img(img: np.array) -> np.array:
-        img = np.array(img)
-        img = (img * float(DataSaver._DEPTH_DIVIDING)).astype(np.uint16)
-        return img
+        return (np.array(img) * float(DataSaver._DEPTH_DIVIDING)).astype(np.uint16)
 
     @ staticmethod
     def _save_png_img(path: str, img: np.array) -> None:

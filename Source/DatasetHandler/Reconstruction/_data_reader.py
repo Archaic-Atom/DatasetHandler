@@ -126,14 +126,12 @@ class DataReader(object):
     @staticmethod
     def _read_gray_tiff(path: str) -> np.array:
         img = np.array(tifffile.imread(path))
-        img = (img - img.min()) / (img.max() - img.min())
-        return img
+        return (img - img.min()) / (img.max() - img.min())
 
     @staticmethod
     def _read_normal_tiff(path: str) -> np.array:
         img = np.array(tifffile.imread(path))
-        img = img / 255.0
-        return img
+        return img / 255.0
 
     @staticmethod
     def _padding_size(value: int, base: int = 64) -> int:

@@ -29,8 +29,7 @@ class ReconstructionDataset(Dataset):
         return self.__img_path[idx]
 
     def __getitem__(self, idx: int) -> tuple:
-        img_path = self.__get_path(idx)
-        return self.__data_handler.get_data(img_path, self.__is_training)
+        return self.__data_handler.get_data(self.__get_path(idx), self.__is_training)
 
     def __len__(self) -> int:
         return len(self.__data_steam)
