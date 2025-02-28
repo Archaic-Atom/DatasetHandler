@@ -50,11 +50,12 @@ class DataReader(object):
         # pading size
         args = self.__args
 
-        if left_img.shape[0] < args.imgHeight:
+        if left_img.shape[0] < args.imgHeight and left_img.shape[1] < args.imgWidth:
             padding_height, padding_width = args.imgHeight, args.imgWidth
         else:
             padding_height, padding_width = \
-                self._padding_size(left_img.shape[0]), self._padding_size(left_img.shape[1])
+                self._padding_size(left_img.shape[0], args.size_magnification), \
+                self._padding_size(left_img.shape[1], args.size_magnification)
 
         top_pad, left_pad = padding_height - left_img.shape[0], padding_width - right_img.shape[1]
 
@@ -83,11 +84,14 @@ class DataReader(object):
         left_img, right_img, top_pad, left_pad = self._img_padding(left_img, right_img)
 
         if gt_dsp_path != 'None':
-            gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
-            gt_dsp = gt_dsp if gt_dsp.ndim == 2 else np.squeeze(gt_dsp, axis=2)
-            if top_pad > 0 or left_pad > 0:
-                gt_dsp = np.lib.pad(gt_dsp, ((top_pad, 0), (0, left_pad)),
-                                    mode='constant', constant_values=0)
+            try:
+                gt_dsp = np.array(self.__label_read_func(gt_dsp_path))
+                gt_dsp = gt_dsp if gt_dsp.ndim == 2 else np.squeeze(gt_dsp, axis=2)
+                if top_pad > 0 or left_pad > 0:
+                    gt_dsp = np.lib.pad(gt_dsp, ((top_pad, 0), (0, left_pad)),
+                                        mode='constant', constant_values=0)
+            except Exception:
+                gt_dsp = np.zeros([left_img.shape[0], left_img.shape[1]])
         else:
             gt_dsp = np.zeros([left_img.shape[0], left_img.shape[1]])
 
@@ -145,9 +149,9 @@ class DataReader(object):
 
     @staticmethod
     def _read_gray_tiff(path: str) -> np.array:
-        return np.array(tifffile.imread(path)).expand_dims(img, axis=2)
+        return np.expand_dims(np.array(tifffile.imread(path)), axis=2)
 
-    @staticmethod
+    @ staticmethod
     def _read_rob_disp(path: str) -> np.array:
         file_type = os.path.splitext(path)[-1]
         if file_type == ".png":
@@ -156,12 +160,12 @@ class DataReader(object):
             gt_dsp = DataReader._read_pfm_disp(path)
         return gt_dsp
 
-    @staticmethod
+    @ staticmethod
     def _padding_size(value: int, base: int = 64) -> int:
         off_set = 1
-        return value // base + off_set
+        return int((value // base + off_set) * base)
 
-    @staticmethod
+    @ staticmethod
     def _get_name(dataset_name: str, path: str) -> str:
         name = ""
         if dataset_name in {"eth3d", "middlebury"}:
