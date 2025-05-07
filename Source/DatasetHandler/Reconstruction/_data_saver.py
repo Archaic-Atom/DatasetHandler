@@ -40,6 +40,10 @@ class DataSaver(object):
                 name = batch_size * img_id + idx
                 self.save_whu_test_data(tmp_res, name)
                 break
+            if case('mask'):
+                name = batch_size * img_id + idx
+                self.save_mask_img(tmp_res, name)
+                break
             if case():
                 jf.log.error("The model's name is error!!!")
 
@@ -79,6 +83,11 @@ class DataSaver(object):
         path = self._generate_output_img_path(args.resultImgDir, num, img_type='.png')
         cv2.imwrite(path, img * 255)
         #tifffile.imsave(path, img * 255, compress=6)
+
+    def save_mask_img(self, img: np.array, num: int) -> None:
+        args = self.__args
+        path = self._generate_output_img_path(args.resultImgDir, num)
+        self._save_png_img(path, img.astype(np.uint8))
 
     @staticmethod
     def _crop_test_img(img: np.array, top_pad: int, left_pad: int) -> np.array:
