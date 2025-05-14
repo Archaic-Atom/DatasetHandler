@@ -107,6 +107,7 @@ class DataReader(object):
                 'middlebury': (jf.ImgIO.read_img, self._read_pfm_disp),
                 'sceneflow': (jf.ImgIO.read_img, self._read_pfm_disp),
                 'crestereo': (jf.ImgIO.read_img, self._read_cre_disp),
+                'synthetic': (jf.ImgIO.read_img, self._read_synthetic_data_disp),
                 'rob': (jf.ImgIO.read_img, self._read_rob_disp),
                 'whu': (self._read_gray_tiff, self._read_gray_tiff),
                 }
@@ -151,7 +152,7 @@ class DataReader(object):
     def _read_gray_tiff(path: str) -> np.array:
         return np.expand_dims(np.array(tifffile.imread(path)), axis=2)
 
-    @ staticmethod
+    @staticmethod
     def _read_rob_disp(path: str) -> np.array:
         file_type = os.path.splitext(path)[-1]
         if file_type == ".png":
@@ -160,7 +161,16 @@ class DataReader(object):
             gt_dsp = DataReader._read_pfm_disp(path)
         return gt_dsp
 
-    @ staticmethod
+    @staticmethod
+    def _read_synthetic_data_disp(path: str) -> np.array:
+        file_type = os.path.splitext(path)[-1]
+        if file_type == ".png":
+            gt_dsp = DataReader._read_cre_disp(path)
+        else:
+            gt_dsp = DataReader._read_pfm_disp(path)
+        return gt_dsp
+
+    @staticmethod
     def _padding_size(value: int, base: int = 64) -> int:
         off_set = 1
         return int((value // base + off_set) * base)

@@ -50,7 +50,8 @@ class ChangeDetectionDatasetUnitTest(object):
             print(batch_data[1].size())
             print(batch_data[2].size())
             return
-\
+
+
 def main() -> None:
     unit_test = ChangeDetectionDatasetUnitTest()
     args = unit_test.create_args()
